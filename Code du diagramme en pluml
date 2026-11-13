@@ -1,0 +1,75 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class Passager {
+  - id : int
+  - nom : string
+  - prenom : string
+  - telephone : string
+  + getId() : int
+  + nomComplet() : string
+}
+
+class Vol {
+  - code : string
+  - depart : string
+  - destination : string
+  - date : string
+  - capacite : int
+  - placesOccupees : int
+  - prix : double
+  + placesRestantes() : int
+  + estComplet() : bool
+  + occuperPlace() : void
+  + libererPlace() : void
+}
+
+class Reservation {
+  - id : int
+  - statut : StatutReservation
+  + valider(p : Paiement*) : void
+  + annuler() : void
+  + estPayee() : bool
+  + estAnnulee() : bool
+}
+
+class Paiement {
+  - id : int
+  - montant : double
+  - mode : string
+  - statut : StatutPaiement
+  + rembourser() : void
+}
+
+class Agence {
+  - nom : string
+  + enregistrerPassager(...) : Passager&
+  + ajouterVol(...) : Vol&
+  + afficherVolsDisponibles() : void
+  + rechercherVol(motCle : string) : void
+  + effectuerReservation(idPassager : int, codeVol : string) : Reservation&
+  + enregistrerPaiement(idRes : int, montant : double, mode : string) : Paiement&
+  + annulerReservation(idRes : int) : string
+  + consulterReservations() : void
+  + afficherReservation(id : int) : void
+}
+
+enum StatutReservation {
+  EN_ATTENTE
+  VALIDEE
+  ANNULEE
+}
+enum StatutPaiement {
+  PAYE
+  REMBOURSE
+}
+
+Passager "1" -- "0..*" Reservation : effectue >
+Vol "1" -- "0..*" Reservation : concerne >
+Reservation "1" -- "0..1" Paiement : est réglée par >
+Agence "1" o-- "0..*" Passager
+Agence "1" o-- "0..*" Vol
+Agence "1" o-- "0..*" Reservation
+Reservation ..> StatutReservation
+Paiement ..> StatutPaiement
+@enduml
