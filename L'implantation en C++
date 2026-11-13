@@ -1,0 +1,140 @@
+Application console : gestion d'une agence de voyage (Cotonou)
+// Compilation : g++ -std=c++17 -Wall -o agence main.cpp
+#include <iostream>
+#include <limits>
+#include <string>
+
+#include "Agence.h"
+
+using namespace std;
+
+// ---------- Saisies sécurisées ----------
+static void finDeFlux() {
+    cout << "\nFin de la saisie. Au revoir.\n";
+    exit(0);
+}
+
+static string lireTexte(const string& invite, bool obligatoire = true) {
+    string s;
+    while (true) {
+        cout << invite;
+        if (!getline(cin, s)) finDeFlux();
+        if (!obligatoire || !s.empty()) return s;
+        cout << "  Saisie invalide : champ obligatoire.\n";
+    }
+}
+
+static int lireEntier(const string& invite, int min, int max) {
+    while (true) {
+        string s = lireTexte(invite);
+        try {
+            size_t pos;
+            int v = stoi(s, &pos);
+            if (pos == s.size() && v >= min && v <= max) return v;
+        } catch (...) {}
+        cout << "  Saisie invalide : entrez un entier entre " << min << " et " << max << ".\n";
+    }
+}
+
+static double lireReel(const string& invite, double min) {
+    while (true) {
+        string s = lireTexte(invite);
+        try {
+            size_t pos;
+            double v = stod(s, &pos);
+            if (pos == s.size() && v >= min) return v;
+        } catch (...) {}
+        cout << "  Saisie invalide : entrez un nombre >= " << min << ".\n";
+    }
+}
+
+static void afficherMenu() {
+    cout << "\n===== AGENCE DE VOYAGE - COTONOU =====\n"
+         << " 1. Enregistrer un passager\n"
+         << " 2. Ajouter un vol\n"
+         << " 3. Afficher les vols disponibles\n"
+         << " 4. Rechercher un vol\n"
+         << " 5. Effectuer une reservation\n"
+         << " 6. Enregistrer un paiement\n"
+         << " 7. Annuler une reservation\n"
+         << " 8. Consulter les reservations\n"
+         << " 9. Afficher les informations d'une reservation\n"
+         << "10. Quitter\n"
+         << "======================================\n";
+}
+
+int main() {
+    Agence agence("Agence de voyage de Cotonou");
+    int choix = 0;
+
+    do {
+        afficherMenu();
+        choix = lireEntier("Votre choix : ", 1, 10);
+
+        try {
+            switch (choix) {
+            case 1: {
+                string nom = lireTexte("Nom : ");
+                string prenom = lireTexte("Prenom : ");
+                string tel = lireTexte("Telephone : ");
+                Passager& p = agence.enregistrerPassager(nom, prenom, tel);
+                cout << "Passager enregistre avec l'ID " << p.getId() << ".\n";
+                break;
+            }
+            case 2: {
+                string code = lireTexte("Code du vol : ");
+                string dep = lireTexte("Ville de depart : ");
+                string dest = lireTexte("Destination : ");
+                string date = lireTexte("Date (JJ/MM/AAAA) : ");
+                int cap = lireEntier("Capacite (places) : ", 1, 1000);
+                double prix = lireReel("Prix du billet (FCFA) : ", 0);
+                agence.ajouterVol(code, dep, dest, date, cap, prix);
+                cout << "Vol " << code << " ajoute.\n";
+                break;
+            }
+            case 3:
+                agence.afficherVolsDisponibles();
+                break;
+            case 4:
+                agence.rechercherVol(lireTexte("Mot-cle (code, depart ou destination) : "));
+                break;
+            case 5: {
+                int idP = lireEntier("ID du passager : ", 1, 1000000);
+                string code = lireTexte("Code du vol : ");
+                Reservation& r = agence.effectuerReservation(idP, code);
+                cout << "Reservation n°" << r.getId()
+                     << " creee (en attente de paiement pour validation).\n";
+                break;
+            }
+            case 6: {
+                int idR = lireEntier("ID de la reservation : ", 1, 1000000);
+                double montant = lireReel("Montant (FCFA) : ", 0);
+                string mode = lireTexte("Mode de paiement (Especes, Mobile Money, Carte) : ");
+                agence.enregistrerPaiement(idR, montant, mode);
+                cout << "Paiement enregistre : reservation validee.\n";
+                break;
+            }
+            case 7: {
+                int idR = lireEntier("ID de la reservation a annuler : ", 1, 1000000);
+                cout << agence.annulerReservation(idR) << "\n";
+                break;
+            }
+            case 8:
+                agence.consulterReservations();
+                break;
+            case 9: {
+                int idR = lireEntier("ID de la reservation : ", 1, 1000000);
+                agence.afficherReservation(idR);
+                break;
+            }
+            case 10:
+                cout << "Merci d'avoir utilise l'application. Au revoir !\n";
+                break;
+            }
+        } catch (const exception& e) {
+            cout << "Erreur : " << e.what() << "\n";
+        }
+    } while (choix != 10);
+
+    return 0;
+}
